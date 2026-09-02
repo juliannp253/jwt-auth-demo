@@ -1,50 +1,130 @@
-import LogoutIcon from '@mui/icons-material/Logout'
+import { useState } from 'react'
+import RefreshIcon from '@mui/icons-material/Refresh'
 import Box from '@mui/material/Box'
 import Button from '@mui/material/Button'
+import Container from '@mui/material/Container'
+import Grid from '@mui/material/Grid'
 import Paper from '@mui/material/Paper'
 import Stack from '@mui/material/Stack'
 import Typography from '@mui/material/Typography'
 import { useNavigate } from 'react-router-dom'
+
+import { DashboardMetrics } from '../components/DashboardMetrics'
+import { Navbar } from '../components/Navbar'
 import { ProjectForm } from '../components/ProjectForm'
 import { ProjectList } from '../components/ProjectList'
-import { useAuth } from '../hooks/useAuth'
+import { TaskList } from '../components/TaskList'
 import { useProjectForm } from '../hooks/useProjectForm'
 import { useProjects } from '../hooks/useProjects'
+import { useTasks } from '../hooks/useTasks'
 
 export function DashboardPage() {
-  const { logout } = useAuth()
   const navigate = useNavigate()
-  const { projects, loading, error, refetch } = useProjects()
-  const projectForm = useProjectForm({ onSuccess: refetch })
 
-  function handleLogout() {
-    logout()
-    navigate('/login')
+  const {
+    projects,
+    loading: loadingProjects,
+    error: errorProjects,
+    refetch: refetchProjects,
+  } = useProjects()
+
+  const {
+    tasks,
+    loading: loadingTasks,
+    error: errorTasks,
+    refetch: refetchTasks,
+  } = useTasks()
+
+  const [selectedProjectId, setSelectedProjectId] = useState<number | null>(null)
+
+  const projectForm = useProjectForm({
+    onSuccess: () => {
+      refetchProjects()
+    },
+  })
+
+  function handleRefreshAll() {
+    refetchProjects()
+    refetchTasks()
   }
 
+  const inProgressCount = tasks.filter((t) => t.status === 'IN_PROGRESS').length
+  const completedCount = tasks.filter((t) => t.status === 'DONE').length
+
   return (
-    <Box maxWidth={640} mx="auto" mt={6}>
-      <Stack direction="row" justifyContent="space-between" alignItems="center" mb={3}>
-        <Box>
-          <Typography variant="h4" gutterBottom>
-            Dashboard
-          </Typography>
-          <Typography variant="body2" color="text.secondary">
-            Fase 4 — formulario + lista conectados.
-          </Typography>
-        </Box>
-        <Button startIcon={<LogoutIcon />} onClick={handleLogout}>
-          Cerrar sesión
-        </Button>
-      </Stack>
+    <Box sx={{ minHeight: '100vh', bgcolor: 'background.default', pb: 6 }}>
+      <Navbar />
 
-      <Paper sx={{ p: 3, mb: 3 }}>
-        <ProjectForm {...projectForm} />
-      </Paper>
+      <Container maxWidth="lg" sx={{ textAlign: 'left' }}>
+        <Stack
+          direction={{ xs: 'column', sm: 'row' }}
+          justifyContent="space-between"
+          alignItems={{ xs: 'flex-start', sm: 'center' }}
+          spacing={2}
+          mb={3}
+        >
+          <Box>
+            <Typography variant="h4" fontWeight={700} gutterBottom>
+              Tablero de Proyectos y Tareas
+            </Typography>
+          </Box>
 
-      <Paper sx={{ p: 3 }}>
-        <ProjectList projects={projects} loading={loading} error={error} />
-      </Paper>
+          <Button
+            variant="outlined"
+            size="small"
+            startIcon={<RefreshIcon />}
+            onClick={handleRefreshAll}
+          >
+            Actualizar
+          </Button>
+        </Stack>
+
+        {/* Componente modular de métricas */}
+        <DashboardMetrics
+          projectsCount={projects.length}
+          tasksCount={tasks.length}
+          inProgressCount={inProgressCount}
+          completedCount={completedCount}
+        />
+
+        {/* Tablero en dos columnas: Proyectos y Tareas */}
+        <Grid container spacing={3}>
+          {/* Columna Izquierda: Proyectos */}
+          <Grid size={{ xs: 12, md: 5 }}>
+            <Stack spacing={3}>
+              <Paper elevation={1} sx={{ p: 2.5 }}>
+                <ProjectForm {...projectForm} />
+              </Paper>
+
+              <Paper elevation={1} sx={{ p: 2.5 }}>
+                <ProjectList
+                  projects={projects}
+                  tasks={tasks}
+                  loading={loadingProjects}
+                  error={errorProjects}
+                  selectedProjectId={selectedProjectId}
+                  onSelectProject={(id) => setSelectedProjectId(id)}
+                />
+              </Paper>
+            </Stack>
+          </Grid>
+
+          {/* Columna Derecha: Tareas */}
+          <Grid size={{ xs: 12, md: 7 }}>
+            <Paper elevation={1} sx={{ p: 2.5 }}>
+              <TaskList
+                tasks={tasks}
+                projects={projects}
+                loading={loadingTasks}
+                error={errorTasks}
+                selectedProjectId={selectedProjectId}
+                onClearProjectFilter={() => setSelectedProjectId(null)}
+                onSelectTask={(id) => navigate(`/tasks/${id}`)}
+              />
+            </Paper>
+          </Grid>
+        </Grid>
+      </Container>
     </Box>
   )
 }
