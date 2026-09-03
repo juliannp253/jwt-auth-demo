@@ -1,6 +1,7 @@
-import { createContext, useState, type ReactNode } from 'react'
+import { createContext, useEffect, useState, type ReactNode } from 'react'
 import * as authService from '../services/authService'
 import { getApiErrorMessage } from '../services/httpClient'
+import type { UserResponse } from '../types'
 
 interface LoginResult {
   success: boolean
@@ -9,6 +10,7 @@ interface LoginResult {
 
 export interface AuthContextValue {
   isAuthenticated: boolean
+  user: UserResponse | null
   login: (username: string, password: string) => Promise<LoginResult>
   logout: () => void
 }
@@ -17,12 +19,43 @@ export const AuthContext = createContext<AuthContextValue | null>(null)
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [isAuthenticated, setIsAuthenticated] = useState(() => Boolean(authService.getToken()))
+  const [user, setUser] = useState<UserResponse | null>(null)
+
+  // Si ya hay un token al recargar la página, consultamos GET /auth/me
+  useEffect(() => {
+    if (!isAuthenticated) return
+
+    let cancelled = false
+
+    authService
+      .getMe()
+      .then((userData) => {
+        if (!cancelled) setUser(userData)
+      })
+      .catch(() => {
+        // Si el token es inválido o expiró, cerramos sesión limpiamente
+        if (!cancelled) {
+          authService.clearToken()
+          setIsAuthenticated(false)
+          setUser(null)
+        }
+      })
+
+    return () => {
+      cancelled = true
+    }
+  }, [isAuthenticated])
 
   async function handleLogin(username: string, password: string): Promise<LoginResult> {
     try {
       const token = await authService.login(username, password)
       authService.saveToken(token)
       setIsAuthenticated(true)
+
+      // Cargar los datos del usuario recién autenticado (GET /auth/me)
+      const userData = await authService.getMe()
+      setUser(userData)
+
       return { success: true }
     } catch (err) {
       return { success: false, error: getApiErrorMessage(err) }
@@ -32,11 +65,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   function handleLogout() {
     authService.clearToken()
     setIsAuthenticated(false)
+    setUser(null)
   }
 
   return (
     <AuthContext.Provider
-      value={{ isAuthenticated, login: handleLogin, logout: handleLogout }}
+      value={{ isAuthenticated, user, login: handleLogin, logout: handleLogout }}
     >
       {children}
     </AuthContext.Provider>

@@ -14,7 +14,6 @@ export function useRegisterForm({ onSuccess }: UseRegisterFormOptions = {}) {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  // Validaciones mínimas según Swagger (username >= 3, email con @, password >= 6)
   const isValid =
     username.trim().length >= 3 &&
     email.trim().includes('@') &&

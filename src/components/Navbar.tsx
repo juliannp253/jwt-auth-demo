@@ -1,9 +1,11 @@
 import AssignmentIcon from '@mui/icons-material/Assignment'
 import DashboardIcon from '@mui/icons-material/Dashboard'
 import LogoutIcon from '@mui/icons-material/Logout'
+import PersonIcon from '@mui/icons-material/Person'
 import AppBar from '@mui/material/AppBar'
 import Box from '@mui/material/Box'
 import Button from '@mui/material/Button'
+import Chip from '@mui/material/Chip'
 import Container from '@mui/material/Container'
 import Stack from '@mui/material/Stack'
 import Toolbar from '@mui/material/Toolbar'
@@ -12,7 +14,7 @@ import { useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
 
 export function Navbar() {
-  const { logout } = useAuth()
+  const { user, logout } = useAuth()
   const navigate = useNavigate()
   const location = useLocation()
 
@@ -40,7 +42,7 @@ export function Navbar() {
             </Typography>
           </Stack>
 
-          <Stack direction="row" spacing={1} alignItems="center">
+          <Stack direction="row" spacing={1.5} alignItems="center">
             <Button
               variant={isDashboard ? 'contained' : 'text'}
               size="small"
@@ -56,10 +58,21 @@ export function Navbar() {
               startIcon={<AssignmentIcon />}
               onClick={() => navigate('/tasks')}
             >
-              Tareas (/tasks)
+              Tareas
             </Button>
 
-            <Box sx={{ width: 8 }} />
+            {user && (
+              <Chip
+                icon={<PersonIcon fontSize="small" />}
+                label={`${user.username} (${user.role})`}
+                color="primary"
+                variant="outlined"
+                size="small"
+                sx={{ fontWeight: 600 }}
+              />
+            )}
+
+            <Box sx={{ width: 4 }} />
 
             <Button
               color="error"
