@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import AddIcon from '@mui/icons-material/Add'
 import RefreshIcon from '@mui/icons-material/Refresh'
 import Box from '@mui/material/Box'
 import Button from '@mui/material/Button'
@@ -13,6 +14,7 @@ import { DashboardMetrics } from '../components/DashboardMetrics'
 import { Navbar } from '../components/Navbar'
 import { ProjectForm } from '../components/ProjectForm'
 import { ProjectList } from '../components/ProjectList'
+import { TaskFormDialog } from '../components/TaskFormDialog'
 import { TaskList } from '../components/TaskList'
 import { useProjectForm } from '../hooks/useProjectForm'
 import { useProjects } from '../hooks/useProjects'
@@ -36,6 +38,7 @@ export function DashboardPage() {
   } = useTasks()
 
   const [selectedProjectId, setSelectedProjectId] = useState<number | null>(null)
+  const [isCreateTaskOpen, setIsCreateTaskOpen] = useState(false)
 
   const projectForm = useProjectForm({
     onSuccess: () => {
@@ -43,6 +46,7 @@ export function DashboardPage() {
     },
   })
 
+  // Recargar proyectos y tareas al mismo tiempo
   function handleRefreshAll() {
     refetchProjects()
     refetchTasks()
@@ -69,14 +73,24 @@ export function DashboardPage() {
             </Typography>
           </Box>
 
-          <Button
-            variant="outlined"
-            size="small"
-            startIcon={<RefreshIcon />}
-            onClick={handleRefreshAll}
-          >
-            Actualizar
-          </Button>
+          <Stack direction="row" spacing={1.5}>
+            <Button
+              variant="contained"
+              size="small"
+              startIcon={<AddIcon />}
+              onClick={() => setIsCreateTaskOpen(true)}
+            >
+              Nueva Tarea
+            </Button>
+            <Button
+              variant="outlined"
+              size="small"
+              startIcon={<RefreshIcon />}
+              onClick={handleRefreshAll}
+            >
+              Actualizar
+            </Button>
+          </Stack>
         </Stack>
 
         <DashboardMetrics
@@ -123,6 +137,17 @@ export function DashboardPage() {
           </Grid>
         </Grid>
       </Container>
+
+      <TaskFormDialog
+        open={isCreateTaskOpen}
+        projects={projects}
+        initialProjectId={selectedProjectId}
+        onClose={() => setIsCreateTaskOpen(false)}
+        onSuccess={() => {
+          refetchTasks()
+          refetchProjects()
+        }}
+      />
     </Box>
   )
 }

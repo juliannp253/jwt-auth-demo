@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import AddIcon from '@mui/icons-material/Add'
 import ArrowBackIcon from '@mui/icons-material/ArrowBack'
 import RefreshIcon from '@mui/icons-material/Refresh'
 import Box from '@mui/material/Box'
@@ -10,15 +11,17 @@ import Typography from '@mui/material/Typography'
 import { useNavigate } from 'react-router-dom'
 
 import { Navbar } from '../components/Navbar'
+import { TaskFormDialog } from '../components/TaskFormDialog'
 import { TaskList } from '../components/TaskList'
 import { useProjects } from '../hooks/useProjects'
 import { useTasks } from '../hooks/useTasks'
 
 export function TasksPage() {
   const navigate = useNavigate()
-  const { tasks, loading, error, refetch } = useTasks()
+  const { tasks, loading, error, refetch: refetchTasks } = useTasks()
   const { projects } = useProjects()
   const [selectedProjectId, setSelectedProjectId] = useState<number | null>(null)
+  const [isCreateTaskOpen, setIsCreateTaskOpen] = useState(false)
 
   return (
     <Box sx={{ minHeight: '100vh', bgcolor: 'background.default', pb: 6 }}>
@@ -50,18 +53,28 @@ export function TasksPage() {
               Listado de Tareas
             </Typography>
             <Typography variant="body2" color="text.secondary">
-              Explora y filtra todas las tareas registradas en el backend
+              Explora, filtra y crea tareas asociadas a proyectos
             </Typography>
           </Box>
 
-          <Button
-            variant="outlined"
-            size="small"
-            startIcon={<RefreshIcon />}
-            onClick={() => refetch()}
-          >
-            Actualizar
-          </Button>
+          <Stack direction="row" spacing={1.5}>
+            <Button
+              variant="contained"
+              size="small"
+              startIcon={<AddIcon />}
+              onClick={() => setIsCreateTaskOpen(true)}
+            >
+              Nueva Tarea
+            </Button>
+            <Button
+              variant="outlined"
+              size="small"
+              startIcon={<RefreshIcon />}
+              onClick={() => refetchTasks()}
+            >
+              Actualizar
+            </Button>
+          </Stack>
         </Stack>
 
         <Paper elevation={1} sx={{ p: 3 }}>
@@ -76,6 +89,14 @@ export function TasksPage() {
           />
         </Paper>
       </Container>
+
+      <TaskFormDialog
+        open={isCreateTaskOpen}
+        projects={projects}
+        initialProjectId={selectedProjectId}
+        onClose={() => setIsCreateTaskOpen(false)}
+        onSuccess={() => refetchTasks()}
+      />
     </Box>
   )
 }

@@ -11,3 +11,11 @@ export interface Task {
   assigneeId?: number | null
   dueDate?: string | null
 }
+
+export interface TaskRequest {
+  title: string
+  description?: string
+  priority: TaskPriority
+  assigneeId?: number | null
+  dueDate?: string | null
+}
