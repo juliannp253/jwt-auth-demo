@@ -38,7 +38,6 @@ export function TaskDetailPage() {
     setLoading(true)
     setError(null)
 
-    // Consumir el endpoint individual GET /tasks/{id}
     getTaskById(taskId)
       .then((data) => {
         if (!cancelled) setTask(data)
@@ -69,7 +68,6 @@ export function TaskDetailPage() {
       <Navbar />
 
       <Container maxWidth="md">
-        {/* Barra superior con navegación de regreso */}
         <Stack direction="row" justifyContent="space-between" alignItems="center" mb={3}>
           <Stack direction="row" spacing={1}>
             <Button
@@ -94,7 +92,6 @@ export function TaskDetailPage() {
           </Typography>
         </Stack>
 
-        {/* Estado de carga */}
         {loading && (
           <Card sx={{ p: 6, textAlign: 'center' }}>
             <CircularProgress />
@@ -104,14 +101,12 @@ export function TaskDetailPage() {
           </Card>
         )}
 
-        {/* Estado de error */}
         {error && (
           <Alert severity="error" sx={{ mb: 3 }}>
             {error}
           </Alert>
         )}
 
-        {/* Componente modular de detalle */}
         {!loading && task && (
           <TaskCardDetail
             task={task}

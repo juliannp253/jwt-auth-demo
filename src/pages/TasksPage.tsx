@@ -64,7 +64,6 @@ export function TasksPage() {
           </Button>
         </Stack>
 
-        {/* Contenedor principal de la lista de tareas */}
         <Paper elevation={1} sx={{ p: 3 }}>
           <TaskList
             tasks={tasks}

@@ -79,7 +79,6 @@ export function DashboardPage() {
           </Button>
         </Stack>
 
-        {/* Componente modular de métricas */}
         <DashboardMetrics
           projectsCount={projects.length}
           tasksCount={tasks.length}
@@ -87,7 +86,6 @@ export function DashboardPage() {
           completedCount={completedCount}
         />
 
-        {/* Tablero en dos columnas: Proyectos y Tareas */}
         <Grid container spacing={3}>
           {/* Columna Izquierda: Proyectos */}
           <Grid size={{ xs: 12, md: 5 }}>

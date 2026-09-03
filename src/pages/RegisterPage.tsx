@@ -1,4 +1,3 @@
-import { useState } from 'react'
 import Alert from '@mui/material/Alert'
 import Box from '@mui/material/Box'
 import Button from '@mui/material/Button'
@@ -7,51 +6,46 @@ import Paper from '@mui/material/Paper'
 import Stack from '@mui/material/Stack'
 import TextField from '@mui/material/TextField'
 import Typography from '@mui/material/Typography'
-import { Link as RouterLink, useLocation, useNavigate } from 'react-router-dom'
-import { useAuth } from '../hooks/useAuth'
+import { Link as RouterLink, useNavigate } from 'react-router-dom'
+import { useRegisterForm } from '../hooks/useRegisterForm'
 import { API_URL } from '../types'
 
-export function LoginPage() {
-  const { login } = useAuth()
+export function RegisterPage() {
   const navigate = useNavigate()
-  const location = useLocation()
 
-  // Mensaje de éxito si viene redirigido de RegisterPage
-  const successMessage = (location.state as { message?: string } | null)?.message
-
-  const [username, setUsername] = useState<string>('')
-  const [password, setPassword] = useState<string>('')
-  const [error, setError] = useState<string | null>(null)
-  const [loading, setLoading] = useState(false)
-
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault()
-    setLoading(true)
-    setError(null)
-
-    const result = await login(username, password)
-    setLoading(false)
-
-    if (result.success) {
-      navigate('/dashboard')
-    } else {
-      setError(result.error ?? 'No se pudo iniciar sesión.')
-    }
-  }
+  const {
+    username,
+    setUsername,
+    email,
+    setEmail,
+    password,
+    setPassword,
+    loading,
+    error,
+    isValid,
+    handleSubmit,
+  } = useRegisterForm({
+    onSuccess: (user) => {
+      navigate('/login', {
+        state: {
+          message: `¡Usuario "${user.username}" registrado con éxito! Ya puedes iniciar sesión.`,
+        },
+      })
+    },
+  })
 
   return (
     <Box maxWidth={480} mx="auto" mt={8} px={2}>
       <Typography variant="h4" gutterBottom fontWeight={700}>
-        Iniciar Sesión
+        Crear Cuenta
       </Typography>
       <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-        Ingresa tus credenciales para acceder a la plataforma.
+        Completa el formulario para registrarte en la plataforma.
       </Typography>
 
       <Paper sx={{ p: 3 }}>
         <form onSubmit={handleSubmit}>
           <Stack spacing={2}>
-            {successMessage && <Alert severity="success">{successMessage}</Alert>}
             {error && <Alert severity="error">{error}</Alert>}
 
             <Alert severity="info" variant="outlined">
@@ -64,8 +58,21 @@ export function LoginPage() {
               onChange={(e) => setUsername(e.target.value)}
               required
               fullWidth
+              helperText="Mínimo 3 caracteres"
               autoComplete="username"
             />
+
+            <TextField
+              label="Correo electrónico"
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+              fullWidth
+              helperText="Ejemplo: usuario@correo.com"
+              autoComplete="email"
+            />
+
             <TextField
               label="Contraseña"
               type="password"
@@ -73,16 +80,23 @@ export function LoginPage() {
               onChange={(e) => setPassword(e.target.value)}
               required
               fullWidth
-              autoComplete="current-password"
+              helperText="Mínimo 6 caracteres"
+              autoComplete="new-password"
             />
-            <Button type="submit" variant="contained" disabled={loading} size="large">
-              {loading ? 'Entrando…' : 'Iniciar sesión'}
+
+            <Button
+              type="submit"
+              variant="contained"
+              disabled={!isValid || loading}
+              size="large"
+            >
+              {loading ? 'Registrando…' : 'Registrarse'}
             </Button>
 
             <Typography variant="body2" textAlign="center" pt={1}>
-              ¿No tienes una cuenta?{' '}
-              <Link component={RouterLink} to="/register" fontWeight={600}>
-                Regístrate aquí
+              ¿Ya tienes una cuenta?{' '}
+              <Link component={RouterLink} to="/login" fontWeight={600}>
+                Inicia sesión aquí
               </Link>
             </Typography>
           </Stack>

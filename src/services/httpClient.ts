@@ -17,6 +17,9 @@ httpClient.interceptors.request.use((config) => {
 
 export function getApiErrorMessage(err: unknown): string {
   if (axios.isAxiosError(err)) {
+    if (err.response?.data && typeof err.response.data === 'object' && 'message' in err.response.data) {
+      return String((err.response.data as { message: string }).message)
+    }
     if (err.response?.status === 401) {
       return 'Usuario o contraseña incorrectos.'
     }
