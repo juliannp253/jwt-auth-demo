@@ -116,6 +116,13 @@ export function DashboardPage() {
                   error={errorProjects}
                   selectedProjectId={selectedProjectId}
                   onSelectProject={(id) => setSelectedProjectId(id)}
+                  onProjectDeleted={(deletedId) => {
+                    if (selectedProjectId === deletedId) {
+                      setSelectedProjectId(null)
+                    }
+                    refetchProjects()
+                    refetchTasks()
+                  }}
                 />
               </Paper>
             </Stack>

@@ -1,12 +1,19 @@
+import { useState } from 'react'
 import Alert from '@mui/material/Alert'
 import Button from '@mui/material/Button'
 import Chip from '@mui/material/Chip'
 import CircularProgress from '@mui/material/CircularProgress'
+import Dialog from '@mui/material/Dialog'
+import DialogActions from '@mui/material/DialogActions'
+import DialogContent from '@mui/material/DialogContent'
+import DialogContentText from '@mui/material/DialogContentText'
+import DialogTitle from '@mui/material/DialogTitle'
 import List from '@mui/material/List'
 import ListItem from '@mui/material/ListItem'
 import ListItemText from '@mui/material/ListItemText'
 import Stack from '@mui/material/Stack'
 import Typography from '@mui/material/Typography'
+import { useDeleteProject } from '../hooks/useDeleteProject'
 import type { Project, Task } from '../types'
 
 interface ProjectListProps {
@@ -16,6 +23,7 @@ interface ProjectListProps {
   error: string | null
   selectedProjectId?: number | null
   onSelectProject?: (id: number | null) => void
+  onProjectDeleted?: (projectId: number) => void
 }
 
 export function ProjectList({
@@ -25,7 +33,22 @@ export function ProjectList({
   error,
   selectedProjectId = null,
   onSelectProject,
+  onProjectDeleted,
 }: ProjectListProps) {
+  const [projectToDelete, setProjectToDelete] = useState<Project | null>(null)
+
+  const {
+    removeProject,
+    deletingProjectId,
+    error: deleteError,
+    clearError,
+  } = useDeleteProject({
+    onSuccess: (id) => {
+      setProjectToDelete(null)
+      onProjectDeleted?.(id)
+    },
+  })
+
   if (loading) {
     return (
       <Stack alignItems="center" py={4}>
@@ -44,6 +67,12 @@ export function ProjectList({
 
   return (
     <Stack spacing={1}>
+      {deleteError && (
+        <Alert severity="error" onClose={clearError}>
+          {deleteError}
+        </Alert>
+      )}
+
       <Stack direction="row" justifyContent="space-between" alignItems="center">
         <Typography variant="subtitle1" fontWeight={600}>
           Proyectos ({projects.length})
@@ -60,6 +89,7 @@ export function ProjectList({
         {projects.map((project) => {
           const isSelected = selectedProjectId === project.id
           const taskCount = tasks.filter((t) => t.projectId === project.id).length
+          const isDeleting = deletingProjectId === project.id
 
           return (
             <ListItem
@@ -106,11 +136,58 @@ export function ProjectList({
                     {isSelected ? 'Activo' : 'Filtrar'}
                   </Button>
                 )}
+
+                <Button
+                  size="small"
+                  color="error"
+                  variant="text"
+                  disabled={isDeleting}
+                  onClick={() => setProjectToDelete(project)}
+                  sx={{ textTransform: 'none', fontSize: '0.75rem', py: 0.25, px: 1 }}
+                >
+                  {isDeleting ? 'Borrando…' : 'Eliminar'}
+                </Button>
               </Stack>
             </ListItem>
           )
         })}
       </List>
+
+      <Dialog
+        open={Boolean(projectToDelete)}
+        onClose={() => setProjectToDelete(null)}
+        fullWidth
+        maxWidth="xs"
+      >
+        <DialogTitle fontWeight={700}>¿Eliminar proyecto?</DialogTitle>
+        <DialogContent>
+          <DialogContentText>
+            ¿Estás seguro de que deseas eliminar el proyecto{' '}
+            <strong>"{projectToDelete?.name}"</strong>?
+            <br /><br />
+            <strong>Aviso importante:</strong> Todas las tareas asociadas a este proyecto también se eliminarán permanentemente en cascada.
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions sx={{ p: 2 }}>
+          <Button
+            onClick={() => setProjectToDelete(null)}
+            color="inherit"
+            disabled={Boolean(deletingProjectId)}
+          >
+            Cancelar
+          </Button>
+          <Button
+            color="error"
+            variant="contained"
+            disabled={Boolean(deletingProjectId)}
+            onClick={() => {
+              if (projectToDelete) removeProject(projectToDelete.id)
+            }}
+          >
+            {deletingProjectId ? 'Eliminando…' : 'Eliminar'}
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Stack>
   )
 }
