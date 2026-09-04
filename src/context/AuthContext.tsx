@@ -11,6 +11,7 @@ interface LoginResult {
 export interface AuthContextValue {
   isAuthenticated: boolean
   user: UserResponse | null
+  loading: boolean
   login: (username: string, password: string) => Promise<LoginResult>
   logout: () => void
 }
@@ -21,15 +22,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [isAuthenticated, setIsAuthenticated] = useState(() => Boolean(authService.getToken()))
   const [user, setUser] = useState<UserResponse | null>(null)
 
+  const [loading, setLoading] = useState(() => Boolean(authService.getToken()))
+
   useEffect(() => {
-    if (!isAuthenticated) return
+    const token = authService.getToken()
+    if (!token) {
+      setLoading(false)
+      setIsAuthenticated(false)
+      setUser(null)
+      return
+    }
 
     let cancelled = false
 
     authService
       .getMe()
       .then((userData) => {
-        if (!cancelled) setUser(userData)
+        if (!cancelled) {
+          setUser(userData)
+          setIsAuthenticated(true)
+        }
       })
       .catch(() => {
         if (!cancelled) {
@@ -38,13 +50,33 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           setUser(null)
         }
       })
+      .finally(() => {
+        if (!cancelled) {
+          setLoading(false)
+        }
+      })
 
     return () => {
       cancelled = true
     }
-  }, [isAuthenticated])
+  }, [])
+
+  useEffect(() => {
+    function handleUnauthorized() {
+      authService.clearToken()
+      setIsAuthenticated(false)
+      setUser(null)
+      setLoading(false)
+    }
+
+    window.addEventListener('auth:unauthorized', handleUnauthorized)
+    return () => {
+      window.removeEventListener('auth:unauthorized', handleUnauthorized)
+    }
+  }, [])
 
   async function handleLogin(username: string, password: string): Promise<LoginResult> {
+    setLoading(true)
     try {
       const token = await authService.login(username, password)
       authService.saveToken(token)
@@ -56,6 +88,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return { success: true }
     } catch (err) {
       return { success: false, error: getApiErrorMessage(err) }
+    } finally {
+      setLoading(false)
     }
   }
 
@@ -63,11 +97,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     authService.clearToken()
     setIsAuthenticated(false)
     setUser(null)
+    setLoading(false)
   }
 
   return (
     <AuthContext.Provider
-      value={{ isAuthenticated, user, login: handleLogin, logout: handleLogout }}
+      value={{ isAuthenticated, user, loading, login: handleLogin, logout: handleLogout }}
     >
       {children}
     </AuthContext.Provider>
