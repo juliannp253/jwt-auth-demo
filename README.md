@@ -6,6 +6,20 @@ El proyecto permite gestionar el ciclo completo de vida de proyectos y tareas (C
 
 ---
 
+## 🔑 Credenciales de Demo (Usuarios de Prueba)
+
+Para probar la aplicación inmediatamente sin necesidad de registrarte, la API cuenta con los siguientes usuarios de demostración precargados:
+
+| Usuario | Contraseña | Rol | Notas |
+| :--- | :--- | :--- | :--- |
+| **`ana`** | `ana123` | `USER` | Usuario regular de prueba |
+| **`luis`** | `luis123` | `USER` | Usuario regular de prueba |
+| **`admin`** | `admin123` | `ADMIN` | Permisos de administrador (puede eliminar cualquier proyecto) |
+
+> **Nota:** También puedes registrar un usuario completamente nuevo desde la pantalla de **Registro** (`/register`).
+
+---
+
 ## 🚀 ¿Qué problema resuelve el proyecto?
 En entornos de trabajo colaborativo, los equipos necesitan organizar sus objetivos en proyectos estructurados y desglosarlos en tareas individuales con responsables, fechas de entrega y prioridades claras. 
 
@@ -46,9 +60,9 @@ jwt-auth-demo/
 | :--- | :--- | :--- |
 | **`src/pages/`** | Vistas completas de la app (`LoginPage`, `RegisterPage`, `DashboardPage`, `TasksPage`, `TaskDetailPage`, `ProjectDetailPage`). | Cada archivo representa una **pantalla completa** vinculada a una URL en React Router. No contiene lógica compleja; orquesta los componentes hijos. |
 | **`src/components/`** | Bloques de construcción visual (`Navbar`, `ProjectList`, `TaskList`, `TaskCardDetail`, `TaskFormDialog`, `TaskEditDialog`, `DashboardMetrics`). | Son componentes reutilizables. Reciben datos por `props` y emiten eventos hacia arriba. No saben cómo se consultan los datos del servidor. |
-| **`src/services/`** | Capa de infraestructura de red (`httpClient.ts`, `authService.ts`, `projectService.ts`, `taskService.ts`). | Contiene las llamadas HTTP directas a los endpoints mediante Axios. Aquí vive el **interceptor** que inyecta automáticamente el token JWT. |
+| **`src/services/`** | Capa de infraestructura de red (`httpClient.ts`, `authService.ts`, `projectService.ts`, `taskService.ts`). | Contiene las llamadas HTTP directas a los endpoints mediante Axios. Aquí vive el **interceptor** que inyecta automáticamente el token JWT y el interceptor de respuesta 401. |
 | **`src/hooks/`** | Custom hooks (`useAuth`, `useTasks`, `useTaskForm`, `useUpdateTaskStatus`, `useDeleteTask`, `useProjects`, `useProjectTasks`, etc.). | Separan la lógica de la vista. Manejan estados como `loading`, `error`, datos en memoria y llamadas a los servicios. |
-| **`src/context/`** | Contextos globales de React (`AuthContext.tsx`). | Evita el *prop drilling*. Comparte el estado del usuario autenticado (`user`, `isAuthenticated`, `login`, `logout`) con toda la aplicación. |
+| **`src/context/`** | Contextos globales de React (`AuthContext.tsx`). | Evita el *prop drilling*. Comparte el estado del usuario autenticado (`user`, `isAuthenticated`, `loading`, `login`, `logout`) con toda la aplicación. |
 | **`src/types/`** | Modelos de datos TypeScript (`auth.ts`, `project.ts`, `task.ts`, `index.ts`). | Define las interfaces y contratos de datos: cómo vienen las respuestas del backend y qué campos exige cada petición. |
 | **`src/config/`** | Configuración de entorno (`apiUrl.ts`). | Centraliza la URL base de la API REST (`https://d3ujwk09smrk9z.cloudfront.net`) permitiendo cambiarla por variables de entorno. |
 
@@ -77,6 +91,22 @@ La aplicación implementa el consumo de los siguientes endpoints:
 - `GET /projects/{id}/tasks`: Tareas dedicadas de un proyecto específico directo del backend.
 - `POST /projects`: Creación de proyecto (el `ownerId` se toma automáticamente del token JWT).
 - `DELETE /projects/{id}`: Eliminación en cascada del proyecto y todas sus tareas (protegido: solo el owner o ADMIN tienen permisos; responde 403 si no estás autorizado).
+
+---
+
+## Decisiones de Alcance y Diseño
+
+1. **Omisión intencional de `PUT /projects/{id}`:**  
+   Por alcance de diseño, se decidió no implementar la edición de proyectos (`PUT /projects/{id}`) en esta versión. Se priorizó implementar el ciclo completo de CRUD sobre la entidad central de **Tareas** (con edición completa mediante `PUT /tasks/{id}` y cambio de estado con `PATCH /tasks/{id}/status`), mientras que para **Proyectos** se implementó su creación (`POST`), consulta global e individual (`GET`), consulta de tareas dedicadas (`GET /projects/{id}/tasks`) y su eliminación con regla de seguridad en cascada (`DELETE /projects/{id}`).
+
+2. **Catálogo de Responsables (Assignees):**  
+   La API REST oficial no expone un endpoint `GET /users` para listar a todos los usuarios registrados dinámicamente. Por este motivo, el selector de responsables muestra a los usuarios sembrados de la base de datos de demo (`Ana`, `Luis`, `Admin`) junto al usuario autenticado actual (`user.id`).
+
+3. **Prevención de FOUC (Flash of Unauthenticated Content):**  
+   Se implementó un estado reactivo `loading` en `AuthContext`. Mientras se valida el token existente en `localStorage` con `GET /auth/me`, `ProtectedRoute` muestra un spinner de pantalla completa, impidiendo que el Dashboard parpadee si el token guardado ha expirado o no es válido.
+
+4. **Interceptor de Respuesta 401:**  
+   En `httpClient.ts`, cualquier respuesta con código HTTP 401 limpia inmediatamente el token persistido y dispara un cierre de sesión automático y seguro.
 
 ---
 
