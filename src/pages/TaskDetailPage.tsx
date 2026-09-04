@@ -109,6 +109,7 @@ export function TaskDetailPage() {
             projectName={projectName}
             projectDescription={project?.description}
             onStatusUpdated={(updated) => setTask(updated)}
+            onTaskDeleted={() => navigate('/tasks')}
           />
         )}
       </Container>

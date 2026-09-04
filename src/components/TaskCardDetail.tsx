@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import CalendarMonthIcon from '@mui/icons-material/CalendarMonth'
+import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline'
 import EditIcon from '@mui/icons-material/Edit'
 import FolderIcon from '@mui/icons-material/Folder'
 import PersonIcon from '@mui/icons-material/Person'
@@ -11,6 +12,11 @@ import Card from '@mui/material/Card'
 import CardContent from '@mui/material/CardContent'
 import Chip from '@mui/material/Chip'
 import CircularProgress from '@mui/material/CircularProgress'
+import Dialog from '@mui/material/Dialog'
+import DialogActions from '@mui/material/DialogActions'
+import DialogContent from '@mui/material/DialogContent'
+import DialogContentText from '@mui/material/DialogContentText'
+import DialogTitle from '@mui/material/DialogTitle'
 import Divider from '@mui/material/Divider'
 import MenuItem from '@mui/material/MenuItem'
 import Paper from '@mui/material/Paper'
@@ -19,6 +25,7 @@ import Stack from '@mui/material/Stack'
 import Typography from '@mui/material/Typography'
 
 import { TaskEditDialog } from './TaskEditDialog'
+import { useDeleteTask } from '../hooks/useDeleteTask'
 import { useUpdateTaskStatus } from '../hooks/useUpdateTaskStatus'
 import type { Task, TaskPriority, TaskStatus } from '../types'
 
@@ -27,6 +34,7 @@ interface TaskCardDetailProps {
   projectName: string
   projectDescription?: string
   onStatusUpdated?: (updatedTask: Task) => void
+  onTaskDeleted?: () => void
 }
 
 function getPriorityChip(priority: TaskPriority) {
@@ -46,25 +54,54 @@ export function TaskCardDetail({
   projectName,
   projectDescription,
   onStatusUpdated,
+  onTaskDeleted,
 }: TaskCardDetailProps) {
   const [isEditOpen, setIsEditOpen] = useState(false)
+  const [isDeleteOpen, setIsDeleteOpen] = useState(false)
 
-  const { changeStatus, updatingTaskId, error, clearError } = useUpdateTaskStatus({
+  // Hook para actualizar estado de la tarea (PATCH /tasks/{id}/status)
+  const {
+    changeStatus,
+    updatingTaskId,
+    error: patchError,
+    clearError: clearPatchError,
+  } = useUpdateTaskStatus({
     onSuccess: (updated) => {
       onStatusUpdated?.(updated)
     },
   })
 
+  // Hook para eliminar la tarea (DELETE /tasks/{id})
+  const {
+    removeTask,
+    deletingTaskId,
+    error: deleteError,
+    clearError: clearDeleteError,
+  } = useDeleteTask({
+    onSuccess: () => {
+      setIsDeleteOpen(false)
+      onTaskDeleted?.()
+    },
+  })
+
   const isUpdating = updatingTaskId === task.id
+  const isDeleting = deletingTaskId === task.id
 
   return (
     <Stack spacing={2}>
-      {error && (
-        <Alert severity="error" onClose={clearError}>
-          {error}
+      {/* Alertas de error */}
+      {patchError && (
+        <Alert severity="error" onClose={clearPatchError}>
+          {patchError}
+        </Alert>
+      )}
+      {deleteError && (
+        <Alert severity="error" onClose={clearDeleteError}>
+          {deleteError}
         </Alert>
       )}
 
+      {/* Advertencia si la tarea no tiene responsable */}
       {!task.assigneeId && (
         <Alert
           severity="warning"
@@ -80,6 +117,7 @@ export function TaskCardDetail({
 
       <Card elevation={2}>
         <CardContent sx={{ p: { xs: 2.5, sm: 4 } }}>
+          {/* Encabezado: Título, Selector de Estado, Prioridad, Botón Editar y Botón Eliminar */}
           <Stack
             direction={{ xs: 'column', sm: 'row' }}
             justifyContent="space-between"
@@ -92,10 +130,11 @@ export function TaskCardDetail({
             </Typography>
 
             <Stack direction="row" spacing={1.5} alignItems="center" flexWrap="wrap">
+              {/* Selector interactivo de Estado (PATCH /tasks/{id}/status) */}
               <Select
                 size="small"
                 value={task.status}
-                disabled={isUpdating}
+                disabled={isUpdating || isDeleting}
                 onChange={(e) => changeStatus(task.id, e.target.value as TaskStatus)}
                 sx={{
                   fontWeight: 600,
@@ -123,10 +162,23 @@ export function TaskCardDetail({
 
               <Button
                 size="small"
-                variant="outlined"         
+                variant="outlined"
+                startIcon={<EditIcon />}
                 onClick={() => setIsEditOpen(true)}
+                disabled={isDeleting}
               >
                 Editar
+              </Button>
+
+              <Button
+                size="small"
+                variant="outlined"
+                color="error"
+                startIcon={<DeleteOutlineIcon />}
+                onClick={() => setIsDeleteOpen(true)}
+                disabled={isDeleting}
+              >
+                Eliminar
               </Button>
             </Stack>
           </Stack>
@@ -221,6 +273,38 @@ export function TaskCardDetail({
           onStatusUpdated?.(updated)
         }}
       />
+
+      <Dialog
+        open={isDeleteOpen}
+        onClose={() => setIsDeleteOpen(false)}
+        fullWidth
+        maxWidth="xs"
+      >
+        <DialogTitle fontWeight={700}>¿Eliminar tarea?</DialogTitle>
+        <DialogContent>
+          <DialogContentText>
+            ¿Estás seguro de que deseas eliminar permanentemente la tarea{' '}
+            <strong>"{task.title}"</strong>? Esta acción no se puede deshacer.
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions sx={{ p: 2 }}>
+          <Button
+            onClick={() => setIsDeleteOpen(false)}
+            color="inherit"
+            disabled={isDeleting}
+          >
+            Cancelar
+          </Button>
+          <Button
+            color="error"
+            variant="contained"
+            disabled={isDeleting}
+            onClick={() => removeTask(task.id)}
+          >
+            {isDeleting ? 'Eliminando…' : 'Eliminar'}
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Stack>
   )
 }

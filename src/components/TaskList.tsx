@@ -8,10 +8,16 @@ import CardActions from '@mui/material/CardActions'
 import CardContent from '@mui/material/CardContent'
 import Chip from '@mui/material/Chip'
 import CircularProgress from '@mui/material/CircularProgress'
+import Dialog from '@mui/material/Dialog'
+import DialogActions from '@mui/material/DialogActions'
+import DialogContent from '@mui/material/DialogContent'
+import DialogContentText from '@mui/material/DialogContentText'
+import DialogTitle from '@mui/material/DialogTitle'
 import MenuItem from '@mui/material/MenuItem'
 import Select from '@mui/material/Select'
 import Stack from '@mui/material/Stack'
 import Typography from '@mui/material/Typography'
+import { useDeleteTask } from '../hooks/useDeleteTask'
 import { useUpdateTaskStatus } from '../hooks/useUpdateTaskStatus'
 import type { Project, Task, TaskPriority, TaskStatus } from '../types'
 
@@ -51,15 +57,27 @@ export function TaskList({
   maxHeight,
 }: TaskListProps) {
   const [statusFilter, setStatusFilter] = useState<string>('ALL')
+  const [taskToDelete, setTaskToDelete] = useState<Task | null>(null)
 
-  // Hook para cambiar el estado de la tarea (PATCH /tasks/{id}/status)
   const {
     changeStatus,
     updatingTaskId,
     error: patchError,
-    clearError,
+    clearError: clearPatchError,
   } = useUpdateTaskStatus({
     onSuccess: () => {
+      onTaskUpdated?.()
+    },
+  })
+
+  const {
+    removeTask,
+    deletingTaskId,
+    error: deleteError,
+    clearError: clearDeleteError,
+  } = useDeleteTask({
+    onSuccess: () => {
+      setTaskToDelete(null)
       onTaskUpdated?.()
     },
   })
@@ -79,7 +97,6 @@ export function TaskList({
     return <Alert severity="error">{error}</Alert>
   }
 
-  // Filtrar según el proyecto seleccionado y el estado seleccionado
   const filteredTasks = tasks.filter((task) => {
     const matchesProject = selectedProjectId === null || task.projectId === selectedProjectId
     const matchesStatus = statusFilter === 'ALL' || task.status === statusFilter
@@ -90,14 +107,17 @@ export function TaskList({
 
   return (
     <Stack spacing={2}>
-      {/* Alerta si falla el cambio de estado (ej: error 422 si DONE no tiene responsable) */}
       {patchError && (
-        <Alert severity="error" onClose={clearError}>
+        <Alert severity="error" onClose={clearPatchError}>
           {patchError}
         </Alert>
       )}
+      {deleteError && (
+        <Alert severity="error" onClose={clearDeleteError}>
+          {deleteError}
+        </Alert>
+      )}
 
-      {/* Barra superior de control y filtros */}
       <Stack
         direction={{ xs: 'column', sm: 'row' }}
         justifyContent="space-between"
@@ -126,7 +146,6 @@ export function TaskList({
         </Stack>
       </Stack>
 
-      {/* Indicador de filtro por proyecto activo */}
       {selectedProject && (
         <Alert
           severity="info"
@@ -140,7 +159,6 @@ export function TaskList({
         </Alert>
       )}
 
-      {/* Lista de tarjetas de tareas */}
       {filteredTasks.length === 0 ? (
         <Typography color="text.secondary" py={3} textAlign="center">
           No hay tareas que coincidan con los filtros aplicados.
@@ -158,13 +176,14 @@ export function TaskList({
             const project = projects.find((p) => p.id === task.projectId)
             const projectName = project ? project.name : `Proyecto #${task.projectId}`
             const isUpdating = updatingTaskId === task.id
+            const isDeleting = deletingTaskId === task.id
 
             return (
               <Card
                 key={task.id}
                 variant="outlined"
                 sx={{
-                  flexShrink: 0, // Evita que flexbox colapse la tarjeta
+                  flexShrink: 0,
                   minHeight: 110,
                   display: 'flex',
                   flexDirection: 'column',
@@ -184,7 +203,6 @@ export function TaskList({
                 }}
               >
                 <CardContent sx={{ pb: 1, pt: 2, px: 2.5 }}>
-                  {/* Encabezado de la tarjeta: Título y Selector de Estado */}
                   <Stack
                     direction={{ xs: 'column', sm: 'row' }}
                     justifyContent="space-between"
@@ -204,12 +222,11 @@ export function TaskList({
                       {task.title}
                     </Typography>
 
-                    {/* Selector interactivo de Estado (PATCH /tasks/{id}/status) y Prioridad */}
                     <Stack direction="row" spacing={1} alignItems="center" flexShrink={0}>
                       <Select
                         size="small"
                         value={task.status}
-                        disabled={isUpdating}
+                        disabled={isUpdating || isDeleting}
                         onChange={(e) => changeStatus(task.id, e.target.value as TaskStatus)}
                         sx={{
                           height: 30,
@@ -241,12 +258,10 @@ export function TaskList({
                     </Stack>
                   </Stack>
 
-                  {/* Proyecto asociado */}
                   <Typography variant="caption" color="text.secondary" display="block" mb={1}>
                     <strong>{projectName}</strong> (ID Proyecto: {task.projectId})
                   </Typography>
 
-                  {/* Descripción de la tarea si existe */}
                   {task.description && (
                     <Typography
                       variant="body2"
@@ -264,7 +279,6 @@ export function TaskList({
                   )}
                 </CardContent>
 
-                {/* Acciones de la tarjeta: fecha límite y botón para navegar al detalle */}
                 <CardActions
                   sx={{
                     pt: 0,
@@ -279,20 +293,65 @@ export function TaskList({
                     {task.dueDate ? `Entrega: ${task.dueDate}` : 'Sin fecha límite'}
                   </Typography>
 
-                  <Button
-                    size="small"
-                    variant="outlined"
-                    endIcon={<OpenInNewIcon fontSize="small" />}
-                    onClick={() => onSelectTask(task.id)}
-                  >
-                    Ver detalle
-                  </Button>
+                  <Stack direction="row" spacing={1}>
+                    <Button
+                      size="small"
+                      variant="outlined"
+                      endIcon={<OpenInNewIcon fontSize="small" />}
+                      onClick={() => onSelectTask(task.id)}
+                    >
+                      Ver detalle
+                    </Button>
+                    <Button
+                      size="small"
+                      color="error"
+                      variant="text"
+                      onClick={() => setTaskToDelete(task)}
+                      disabled={isDeleting}
+                    >
+                      Eliminar
+                    </Button>
+                  </Stack>
                 </CardActions>
               </Card>
             )
           })}
         </Box>
       )}
+
+      <Dialog
+        open={Boolean(taskToDelete)}
+        onClose={() => setTaskToDelete(null)}
+        fullWidth
+        maxWidth="xs"
+      >
+        <DialogTitle fontWeight={700}>¿Eliminar tarea?</DialogTitle>
+        <DialogContent>
+          <DialogContentText>
+            ¿Estás seguro de que deseas eliminar la tarea{' '}
+            <strong>"{taskToDelete?.title}"</strong>? Esta acción no se puede deshacer.
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions sx={{ p: 2 }}>
+          <Button
+            onClick={() => setTaskToDelete(null)}
+            color="inherit"
+            disabled={Boolean(deletingTaskId)}
+          >
+            Cancelar
+          </Button>
+          <Button
+            color="error"
+            variant="contained"
+            disabled={Boolean(deletingTaskId)}
+            onClick={() => {
+              if (taskToDelete) removeTask(taskToDelete.id)
+            }}
+          >
+            {deletingTaskId ? 'Eliminando…' : 'Eliminar'}
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Stack>
   )
 }
