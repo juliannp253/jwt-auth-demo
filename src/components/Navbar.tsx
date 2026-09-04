@@ -46,7 +46,6 @@ export function Navbar() {
             <Button
               variant={isDashboard ? 'contained' : 'text'}
               size="small"
-              startIcon={<DashboardIcon />}
               onClick={() => navigate('/dashboard')}
             >
               Dashboard
@@ -55,7 +54,6 @@ export function Navbar() {
             <Button
               variant={isTasks ? 'contained' : 'text'}
               size="small"
-              startIcon={<AssignmentIcon />}
               onClick={() => navigate('/tasks')}
             >
               Tareas
@@ -77,7 +75,6 @@ export function Navbar() {
             <Button
               color="error"
               size="small"
-              startIcon={<LogoutIcon />}
               onClick={handleLogout}
             >
               Cerrar sesión

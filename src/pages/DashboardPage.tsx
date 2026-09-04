@@ -97,14 +97,6 @@ export function DashboardPage() {
             >
               Nueva Tarea
             </Button>
-            <Button
-              variant="outlined"
-              size="small"
-              startIcon={<RefreshIcon />}
-              onClick={handleRefreshAll}
-            >
-              Actualizar
-            </Button>
           </Stack>
         </Stack>
 
