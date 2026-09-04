@@ -1,6 +1,4 @@
-import AssignmentIcon from '@mui/icons-material/Assignment'
 import DashboardIcon from '@mui/icons-material/Dashboard'
-import LogoutIcon from '@mui/icons-material/Logout'
 import PersonIcon from '@mui/icons-material/Person'
 import AppBar from '@mui/material/AppBar'
 import Box from '@mui/material/Box'

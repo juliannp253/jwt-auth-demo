@@ -1,6 +1,5 @@
 import { useState } from 'react'
 import AddIcon from '@mui/icons-material/Add'
-import RefreshIcon from '@mui/icons-material/Refresh'
 import Box from '@mui/material/Box'
 import Button from '@mui/material/Button'
 import Container from '@mui/material/Container'
@@ -55,13 +54,7 @@ export function DashboardPage() {
     },
   })
 
-  function handleRefreshAll() {
-    refetchProjects()
-    refetchTasks()
-    if (selectedProjectId) {
-      refetchProjectTasks()
-    }
-  }
+  
 
   const displayTasks = selectedProjectId ? projectTasks : tasks
   const displayLoading = selectedProjectId ? loadingProjectTasks : loadingTasks
