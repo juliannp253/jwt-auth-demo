@@ -71,7 +71,6 @@ export function ProjectList({
 
   return (
     <Stack spacing={1}>
-      {/* Alerta de error si falla el borrado (ej: error 403 si no es el owner ni ADMIN) */}
       {deleteError && (
         <Alert severity="error" onClose={clearError}>
           {deleteError}
@@ -114,7 +113,6 @@ export function ProjectList({
               <ListItemText
                 primary={
                   <Stack direction="row" spacing={1} alignItems="center">
-                    {/* Clic discreto en el propio nombre del proyecto para ir al detalle */}
                     <Typography
                       variant="body2"
                       fontWeight={isSelected ? 700 : 600}
@@ -172,7 +170,6 @@ export function ProjectList({
                   </Button>
                 )}
 
-                {/* Botón de eliminar solo texto sin iconos */}
                 <Button
                   size="small"
                   color="error"
@@ -189,7 +186,6 @@ export function ProjectList({
         })}
       </List>
 
-      {/* Modal de confirmación para eliminar proyecto y sus tareas en cascada */}
       <Dialog
         open={Boolean(projectToDelete)}
         onClose={() => setProjectToDelete(null)}

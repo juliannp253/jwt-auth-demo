@@ -23,7 +23,6 @@ export function useTaskForm({
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  // Validación: Proyecto, Título (mín. 3 letras) y Responsable son OBLIGATORIOS
   const isValid = Boolean(projectId) && title.trim().length >= 3 && Boolean(assigneeId)
 
   function reset() {

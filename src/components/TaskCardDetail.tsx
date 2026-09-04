@@ -59,7 +59,6 @@ export function TaskCardDetail({
   const [isEditOpen, setIsEditOpen] = useState(false)
   const [isDeleteOpen, setIsDeleteOpen] = useState(false)
 
-  // Hook para actualizar estado de la tarea (PATCH /tasks/{id}/status)
   const {
     changeStatus,
     updatingTaskId,
@@ -71,7 +70,6 @@ export function TaskCardDetail({
     },
   })
 
-  // Hook para eliminar la tarea (DELETE /tasks/{id})
   const {
     removeTask,
     deletingTaskId,
@@ -89,7 +87,6 @@ export function TaskCardDetail({
 
   return (
     <Stack spacing={2}>
-      {/* Alertas de error */}
       {patchError && (
         <Alert severity="error" onClose={clearPatchError}>
           {patchError}
@@ -101,7 +98,6 @@ export function TaskCardDetail({
         </Alert>
       )}
 
-      {/* Advertencia si la tarea no tiene responsable */}
       {!task.assigneeId && (
         <Alert
           severity="warning"
@@ -117,7 +113,6 @@ export function TaskCardDetail({
 
       <Card elevation={2}>
         <CardContent sx={{ p: { xs: 2.5, sm: 4 } }}>
-          {/* Encabezado: Título, Selector de Estado, Prioridad, Botón Editar y Botón Eliminar */}
           <Stack
             direction={{ xs: 'column', sm: 'row' }}
             justifyContent="space-between"
@@ -130,7 +125,6 @@ export function TaskCardDetail({
             </Typography>
 
             <Stack direction="row" spacing={1.5} alignItems="center" flexWrap="wrap">
-              {/* Selector interactivo de Estado (PATCH /tasks/{id}/status) */}
               <Select
                 size="small"
                 value={task.status}
@@ -257,7 +251,7 @@ export function TaskCardDetail({
                   fontWeight={600}
                   color={task.assigneeId ? 'text.primary' : 'warning.main'}
                 >
-                  {task.assigneeId ? `Usuario #${task.assigneeId}` : 'Sin asignar (¡Asigna uno!)'}
+                  {task.assigneeId ? `Usuario #${task.assigneeId}` : 'Sin asignar'}
                 </Typography>
               </Box>
             </Stack>
