@@ -16,10 +16,6 @@ export function clearToken(): void {
   localStorage.removeItem(TOKEN_KEY)
 }
 
-/**
- * Autentica al usuario y devuelve el token JWT (POST /auth/login)
- * Es público: no requiere token previo.
- */
 export async function login(username: string, password: string): Promise<string> {
   const { data } = await axios.post<{ token: string }>(
     `${getApiBaseUrl()}/auth/login`,
@@ -28,10 +24,6 @@ export async function login(username: string, password: string): Promise<string>
   return data.token
 }
 
-/**
- * Registra un nuevo usuario en la plataforma (POST /auth/register)
- * Es público: no requiere token previo.
- */
 export async function register(body: RegisterRequest): Promise<UserResponse> {
   const { data } = await axios.post<UserResponse>(
     `${getApiBaseUrl()}/auth/register`,
@@ -44,10 +36,6 @@ export async function register(body: RegisterRequest): Promise<UserResponse> {
   return data
 }
 
-/**
- * Obtiene los datos del usuario autenticado actualmente (GET /auth/me)
- * Es protegido: requiere el token JWT que httpClient inyecta automáticamente.
- */
 export async function getMe(): Promise<UserResponse> {
   const { data } = await httpClient.get<UserResponse>('/auth/me')
   return data
