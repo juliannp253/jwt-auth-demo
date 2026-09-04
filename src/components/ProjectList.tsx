@@ -13,6 +13,7 @@ import ListItem from '@mui/material/ListItem'
 import ListItemText from '@mui/material/ListItemText'
 import Stack from '@mui/material/Stack'
 import Typography from '@mui/material/Typography'
+import { useAuth } from '../hooks/useAuth'
 import { useDeleteProject } from '../hooks/useDeleteProject'
 import type { Project, Task } from '../types'
 
@@ -35,6 +36,7 @@ export function ProjectList({
   onSelectProject,
   onProjectDeleted,
 }: ProjectListProps) {
+  const { user } = useAuth()
   const [projectToDelete, setProjectToDelete] = useState<Project | null>(null)
 
   const {
@@ -90,6 +92,7 @@ export function ProjectList({
           const isSelected = selectedProjectId === project.id
           const taskCount = tasks.filter((t) => t.projectId === project.id).length
           const isDeleting = deletingProjectId === project.id
+          const isOwner = user?.id === project.ownerId
 
           return (
             <ListItem
@@ -107,14 +110,29 @@ export function ProjectList({
             >
               <ListItemText
                 primary={
-                  <Typography variant="body2" fontWeight={isSelected ? 700 : 500}>
-                    {project.name}
-                  </Typography>
+                  <Stack direction="row" spacing={1} alignItems="center">
+                    <Typography variant="body2" fontWeight={isSelected ? 700 : 500}>
+                      {project.name}
+                    </Typography>
+                    {isOwner && (
+                      <Chip
+                        label="Tuyo"
+                        size="small"
+                        variant="outlined"
+                        color="primary"
+                        sx={{ height: 20, fontSize: '0.68rem', fontWeight: 600 }}
+                      />
+                    )}
+                  </Stack>
                 }
                 secondary={
-                  <Typography variant="caption" color="text.secondary">
-                    {project.description || `ID: ${project.id}`}
-                  </Typography>
+                  <Stack spacing={0.25} mt={0.25}>
+                    {project.description && (
+                      <Typography variant="caption" color="text.secondary">
+                        {project.description}
+                      </Typography>
+                    )}
+                  </Stack>
                 }
               />
 

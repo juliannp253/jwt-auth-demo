@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { getApiErrorMessage } from '../services/httpClient'
 import { createProject } from '../services/projectService'
 
 interface UseProjectFormOptions {
@@ -11,7 +12,7 @@ export function useProjectForm({ onSuccess }: UseProjectFormOptions = {}) {
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  const valid = name.trim().length >= 3
+  const valid = name.trim().length >= 3 && name.trim().length <= 80
 
   function reset() {
     setName('')
@@ -33,8 +34,8 @@ export function useProjectForm({ onSuccess }: UseProjectFormOptions = {}) {
       })
       reset()
       onSuccess?.()
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Error al crear el proyecto')
+    } catch (err: unknown) {
+      setError(getApiErrorMessage(err))
     } finally {
       setSubmitting(false)
     }

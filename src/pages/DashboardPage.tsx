@@ -18,6 +18,7 @@ import { TaskFormDialog } from '../components/TaskFormDialog'
 import { TaskList } from '../components/TaskList'
 import { useProjectForm } from '../hooks/useProjectForm'
 import { useProjects } from '../hooks/useProjects'
+import { useProjectTasks } from '../hooks/useProjectTasks'
 import { useTasks } from '../hooks/useTasks'
 
 export function DashboardPage() {
@@ -38,6 +39,14 @@ export function DashboardPage() {
   } = useTasks()
 
   const [selectedProjectId, setSelectedProjectId] = useState<number | null>(null)
+
+  const {
+    tasks: projectTasks,
+    loading: loadingProjectTasks,
+    error: errorProjectTasks,
+    refetch: refetchProjectTasks,
+  } = useProjectTasks(selectedProjectId)
+
   const [isCreateTaskOpen, setIsCreateTaskOpen] = useState(false)
 
   const projectForm = useProjectForm({
@@ -46,11 +55,17 @@ export function DashboardPage() {
     },
   })
 
-  // Recargar proyectos y tareas al mismo tiempo
   function handleRefreshAll() {
     refetchProjects()
     refetchTasks()
+    if (selectedProjectId) {
+      refetchProjectTasks()
+    }
   }
+
+  const displayTasks = selectedProjectId ? projectTasks : tasks
+  const displayLoading = selectedProjectId ? loadingProjectTasks : loadingTasks
+  const displayError = selectedProjectId ? errorProjectTasks : errorTasks
 
   const inProgressCount = tasks.filter((t) => t.status === 'IN_PROGRESS').length
   const completedCount = tasks.filter((t) => t.status === 'DONE').length
@@ -132,14 +147,17 @@ export function DashboardPage() {
           <Grid size={{ xs: 12, md: 7 }}>
             <Paper elevation={1} sx={{ p: 2.5 }}>
               <TaskList
-                tasks={tasks}
+                tasks={displayTasks}
                 projects={projects}
-                loading={loadingTasks}
-                error={errorTasks}
+                loading={displayLoading}
+                error={displayError}
                 selectedProjectId={selectedProjectId}
                 onClearProjectFilter={() => setSelectedProjectId(null)}
                 onSelectTask={(id) => navigate(`/tasks/${id}`)}
-                onTaskUpdated={() => refetchTasks()}
+                onTaskUpdated={() => {
+                  refetchTasks()
+                  if (selectedProjectId) refetchProjectTasks()
+                }}
                 maxHeight={560}
               />
             </Paper>
@@ -155,6 +173,7 @@ export function DashboardPage() {
         onSuccess={() => {
           refetchTasks()
           refetchProjects()
+          if (selectedProjectId) refetchProjectTasks()
         }}
       />
     </Box>

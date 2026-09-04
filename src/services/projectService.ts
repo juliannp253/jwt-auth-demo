@@ -1,26 +1,27 @@
 import { httpClient } from './httpClient'
-import type { NewProject, Project } from '../types'
+import type { NewProject, Project, Task, TaskStatus } from '../types'
 
-/**
- * Lista todos los proyectos (GET /projects)
- */
 export async function getProjects(): Promise<Project[]> {
   const { data } = await httpClient.get<Project[]>('/projects')
   return data
 }
 
-/**
- * Crea un nuevo proyecto (POST /projects)
- */
+export async function getProjectById(id: number): Promise<Project> {
+  const { data } = await httpClient.get<Project>(`/projects/${id}`)
+  return data
+}
+
 export async function createProject(body: NewProject): Promise<Project> {
   const { data } = await httpClient.post<Project>('/projects', body)
   return data
 }
 
-/**
- * Elimina un proyecto y sus tareas asociadas en cascada (DELETE /projects/{id})
- * Nota: Solo el owner o un ADMIN tienen permisos. De lo contrario responde 403.
- */
 export async function deleteProject(id: number): Promise<void> {
   await httpClient.delete(`/projects/${id}`)
+}
+
+export async function getProjectTasks(projectId: number, status?: TaskStatus): Promise<Task[]> {
+  const params = status ? { status } : undefined
+  const { data } = await httpClient.get<Task[]>(`/projects/${projectId}/tasks`, { params })
+  return data
 }
