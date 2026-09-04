@@ -228,10 +228,14 @@ export function ProjectDetailPage() {
         onClose={() => setIsDeleteOpen(false)}
         fullWidth
         maxWidth="xs"
+        aria-labelledby="delete-project-detail-title"
+        aria-describedby="delete-project-detail-description"
       >
-        <DialogTitle fontWeight={700}>¿Eliminar proyecto?</DialogTitle>
+        <DialogTitle id="delete-project-detail-title" fontWeight={700}>
+          ¿Eliminar proyecto?
+        </DialogTitle>
         <DialogContent>
-          <DialogContentText>
+          <DialogContentText id="delete-project-detail-description">
             ¿Estás seguro de que deseas eliminar permanentemente el proyecto{' '}
             <strong>"{project?.name}"</strong>?
             <br /><br />
@@ -243,6 +247,7 @@ export function ProjectDetailPage() {
             onClick={() => setIsDeleteOpen(false)}
             color="inherit"
             disabled={Boolean(deletingProjectId)}
+            autoFocus
           >
             Cancelar
           </Button>

@@ -273,10 +273,12 @@ export function TaskCardDetail({
         onClose={() => setIsDeleteOpen(false)}
         fullWidth
         maxWidth="xs"
+        aria-labelledby="delete-detail-dialog-title"
+        aria-describedby="delete-detail-dialog-description"
       >
-        <DialogTitle fontWeight={700}>¿Eliminar tarea?</DialogTitle>
+        <DialogTitle id="delete-detail-dialog-title" fontWeight={700}>¿Eliminar tarea?</DialogTitle>
         <DialogContent>
-          <DialogContentText>
+          <DialogContentText id="delete-detail-dialog-description">
             ¿Estás seguro de que deseas eliminar permanentemente la tarea{' '}
             <strong>"{task.title}"</strong>? Esta acción no se puede deshacer.
           </DialogContentText>
@@ -286,6 +288,7 @@ export function TaskCardDetail({
             onClick={() => setIsDeleteOpen(false)}
             color="inherit"
             disabled={isDeleting}
+            autoFocus
           >
             Cancelar
           </Button>

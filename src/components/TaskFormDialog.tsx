@@ -28,17 +28,17 @@ export function TaskFormDialog({
 }: TaskFormDialogProps) {
   const { user } = useAuth()
 
-  // Lista de usuarios disponibles para asignar (incluyendo al usuario logueado)
+
   const availableUsers = [
-    ...(user ? [{ id: user.id, label: `👤 ${user.username} (ID: ${user.id} - Tú)` }] : []),
-    { id: 1, label: 'Ana (ID: 1)' },
-    { id: 2, label: 'Luis (ID: 2)' },
-    { id: 3, label: 'Admin (ID: 3)' },
+    ...(user ? [{ id: user.id, label: `${user.username} (ID: ${user.id} - Tu usuario)` }] : []),
+    { id: 1, label: 'Ana (ID: 1 - Demo)' },
+    { id: 2, label: 'Luis (ID: 2 - Demo)' },
+    { id: 3, label: 'Admin (ID: 3 - Demo)' },
   ].filter((u, index, self) => self.findIndex((item) => item.id === u.id) === index)
 
   const form = useTaskForm({
     initialProjectId,
-    initialAssigneeId: user?.id ?? 1, // Por defecto asignado al usuario actual
+    initialAssigneeId: user?.id ?? 1,
     onSuccess: (task) => {
       onSuccess(task)
       onClose()
@@ -51,15 +51,22 @@ export function TaskFormDialog({
   }
 
   return (
-    <Dialog open={open} onClose={handleCancel} fullWidth maxWidth="sm">
+    <Dialog
+      open={open}
+      onClose={handleCancel}
+      fullWidth
+      maxWidth="sm"
+      aria-labelledby="task-form-dialog-title"
+    >
       <form onSubmit={form.handleSubmit}>
-        <DialogTitle fontWeight={700}>Crear Nueva Tarea</DialogTitle>
+        <DialogTitle id="task-form-dialog-title" fontWeight={700}>
+          Crear Nueva Tarea
+        </DialogTitle>
 
         <DialogContent dividers>
           <Stack spacing={2.5} pt={0.5}>
             {form.error && <Alert severity="error">{form.error}</Alert>}
 
-            {/* Selector de Proyecto obligatorio */}
             <TextField
               select
               label="Proyecto *"
@@ -71,22 +78,21 @@ export function TaskFormDialog({
             >
               {projects.map((p) => (
                 <MenuItem key={p.id} value={p.id}>
-                  📁 {p.name} (ID: {p.id})
+                  {p.name} (ID: {p.id})
                 </MenuItem>
               ))}
             </TextField>
 
-            {/* Título de la tarea */}
             <TextField
               label="Título de la tarea *"
               value={form.title}
               onChange={(e) => form.setTitle(e.target.value)}
               required
               fullWidth
+              autoFocus
               helperText="Mínimo 3 caracteres"
             />
 
-            {/* Selector de Responsable obligatorio */}
             <TextField
               select
               label="Responsable / Asignado a *"
@@ -94,7 +100,7 @@ export function TaskFormDialog({
               onChange={(e) => form.setAssigneeId(Number(e.target.value))}
               required
               fullWidth
-              helperText="Selecciona el usuario que se encargará de la tarea (obligatorio)"
+              helperText="Usuarios registrados en la API demo (La API no cuenta con GET /users)."
             >
               {availableUsers.map((u) => (
                 <MenuItem key={u.id} value={u.id}>
@@ -103,7 +109,6 @@ export function TaskFormDialog({
               ))}
             </TextField>
 
-            {/* Selector de Prioridad */}
             <TextField
               select
               label="Prioridad *"
@@ -117,7 +122,6 @@ export function TaskFormDialog({
               <MenuItem value="HIGH">Alta</MenuItem>
             </TextField>
 
-            {/* Descripción opcional */}
             <TextField
               label="Descripción"
               value={form.description}
@@ -128,7 +132,6 @@ export function TaskFormDialog({
               placeholder="Detalles de la tarea..."
             />
 
-            {/* Fecha límite opcional */}
             <TextField
               label="Fecha límite (dueDate)"
               type="date"

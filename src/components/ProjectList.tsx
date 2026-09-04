@@ -191,10 +191,14 @@ export function ProjectList({
         onClose={() => setProjectToDelete(null)}
         fullWidth
         maxWidth="xs"
+        aria-labelledby="delete-project-dialog-title"
+        aria-describedby="delete-project-dialog-description"
       >
-        <DialogTitle fontWeight={700}>¿Eliminar proyecto?</DialogTitle>
+        <DialogTitle id="delete-project-dialog-title" fontWeight={700}>
+          ¿Eliminar proyecto?
+        </DialogTitle>
         <DialogContent>
-          <DialogContentText>
+          <DialogContentText id="delete-project-dialog-description">
             ¿Estás seguro de que deseas eliminar el proyecto{' '}
             <strong>"{projectToDelete?.name}"</strong>?
             <br /><br />
@@ -206,6 +210,7 @@ export function ProjectList({
             onClick={() => setProjectToDelete(null)}
             color="inherit"
             disabled={Boolean(deletingProjectId)}
+            autoFocus
           >
             Cancelar
           </Button>

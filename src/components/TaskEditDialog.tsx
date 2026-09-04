@@ -28,12 +28,11 @@ export function TaskEditDialog({
 }: TaskEditDialogProps) {
   const { user } = useAuth()
 
-  // Lista de usuarios disponibles para asignar
   const availableUsers = [
-    ...(user ? [{ id: user.id, label: `👤 ${user.username} (ID: ${user.id} - Tú)` }] : []),
-    { id: 1, label: 'Ana (ID: 1)' },
-    { id: 2, label: 'Luis (ID: 2)' },
-    { id: 3, label: 'Admin (ID: 3)' },
+    ...(user ? [{ id: user.id, label: `${user.username} (ID: ${user.id} - Tu usuario)` }] : []),
+    { id: 1, label: 'Ana (ID: 1 - Demo)' },
+    { id: 2, label: 'Luis (ID: 2 - Demo)' },
+    { id: 3, label: 'Admin (ID: 3 - Demo)' },
   ].filter((u, index, self) => self.findIndex((item) => item.id === u.id) === index)
 
   const [title, setTitle] = useState(task.title)
@@ -44,7 +43,6 @@ export function TaskEditDialog({
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  // Sincronizar datos cuando cambia la tarea
   useEffect(() => {
     setTitle(task.title)
     setDescription(task.description || '')
@@ -81,25 +79,32 @@ export function TaskEditDialog({
   }
 
   return (
-    <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm">
+    <Dialog
+      open={open}
+      onClose={onClose}
+      fullWidth
+      maxWidth="sm"
+      aria-labelledby="task-edit-dialog-title"
+    >
       <form onSubmit={handleSubmit}>
-        <DialogTitle fontWeight={700}>Editar Tarea y Asignar Responsable</DialogTitle>
+        <DialogTitle id="task-edit-dialog-title" fontWeight={700}>
+          Editar Tarea y Asignar Responsable
+        </DialogTitle>
 
         <DialogContent dividers>
           <Stack spacing={2.5} pt={0.5}>
             {error && <Alert severity="error">{error}</Alert>}
 
-            {/* Título de la tarea */}
             <TextField
               label="Título de la tarea *"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               required
               fullWidth
+              autoFocus
               helperText="Mínimo 3 caracteres"
             />
 
-            {/* Selector de Responsable (obligatorio) */}
             <TextField
               select
               label="Responsable / Asignado a *"
@@ -107,7 +112,7 @@ export function TaskEditDialog({
               onChange={(e) => setAssigneeId(Number(e.target.value))}
               required
               fullWidth
-              helperText="Selecciona a quién asignar esta tarea (obligatorio)"
+              helperText="Usuarios registrados en la API demo (La API no cuenta con GET /users)."
             >
               {availableUsers.map((u) => (
                 <MenuItem key={u.id} value={u.id}>
@@ -116,7 +121,6 @@ export function TaskEditDialog({
               ))}
             </TextField>
 
-            {/* Selector de Prioridad */}
             <TextField
               select
               label="Prioridad *"
@@ -130,7 +134,6 @@ export function TaskEditDialog({
               <MenuItem value="HIGH">Alta</MenuItem>
             </TextField>
 
-            {/* Descripción */}
             <TextField
               label="Descripción"
               value={description}
@@ -140,7 +143,6 @@ export function TaskEditDialog({
               rows={3}
             />
 
-            {/* Fecha límite */}
             <TextField
               label="Fecha límite (dueDate)"
               type="date"

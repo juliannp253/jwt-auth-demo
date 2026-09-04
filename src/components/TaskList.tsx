@@ -324,10 +324,14 @@ export function TaskList({
         onClose={() => setTaskToDelete(null)}
         fullWidth
         maxWidth="xs"
+        aria-labelledby="delete-task-dialog-title"
+        aria-describedby="delete-task-dialog-description"
       >
-        <DialogTitle fontWeight={700}>¿Eliminar tarea?</DialogTitle>
+        <DialogTitle id="delete-task-dialog-title" fontWeight={700}>
+          ¿Eliminar tarea?
+        </DialogTitle>
         <DialogContent>
-          <DialogContentText>
+          <DialogContentText id="delete-task-dialog-description">
             ¿Estás seguro de que deseas eliminar la tarea{' '}
             <strong>"{taskToDelete?.title}"</strong>? Esta acción no se puede deshacer.
           </DialogContentText>
@@ -337,6 +341,7 @@ export function TaskList({
             onClick={() => setTaskToDelete(null)}
             color="inherit"
             disabled={Boolean(deletingTaskId)}
+            autoFocus
           >
             Cancelar
           </Button>
