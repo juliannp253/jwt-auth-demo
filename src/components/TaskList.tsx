@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import OpenInNewIcon from '@mui/icons-material/OpenInNew'
 import Alert from '@mui/material/Alert'
+import Box from '@mui/material/Box'
 import Button from '@mui/material/Button'
 import Card from '@mui/material/Card'
 import CardActions from '@mui/material/CardActions'
@@ -11,6 +12,7 @@ import MenuItem from '@mui/material/MenuItem'
 import Select from '@mui/material/Select'
 import Stack from '@mui/material/Stack'
 import Typography from '@mui/material/Typography'
+import { useUpdateTaskStatus } from '../hooks/useUpdateTaskStatus'
 import type { Project, Task, TaskPriority, TaskStatus } from '../types'
 
 interface TaskListProps {
@@ -21,18 +23,8 @@ interface TaskListProps {
   selectedProjectId: number | null
   onClearProjectFilter: () => void
   onSelectTask: (id: number) => void
-}
-
-function getStatusBadge(status: TaskStatus) {
-  switch (status) {
-    case 'DONE':
-      return <Chip label="Completada" color="success" size="small" />
-    case 'IN_PROGRESS':
-      return <Chip label="En progreso" color="warning" size="small" />
-    case 'TODO':
-    default:
-      return <Chip label="Por hacer" color="default" size="small" />
-  }
+  onTaskUpdated?: () => void
+  maxHeight?: number | string
 }
 
 function getPriorityBadge(priority: TaskPriority) {
@@ -55,8 +47,22 @@ export function TaskList({
   selectedProjectId,
   onClearProjectFilter,
   onSelectTask,
+  onTaskUpdated,
+  maxHeight,
 }: TaskListProps) {
   const [statusFilter, setStatusFilter] = useState<string>('ALL')
+
+  // Hook para cambiar el estado de la tarea (PATCH /tasks/{id}/status)
+  const {
+    changeStatus,
+    updatingTaskId,
+    error: patchError,
+    clearError,
+  } = useUpdateTaskStatus({
+    onSuccess: () => {
+      onTaskUpdated?.()
+    },
+  })
 
   if (loading) {
     return (
@@ -73,6 +79,7 @@ export function TaskList({
     return <Alert severity="error">{error}</Alert>
   }
 
+  // Filtrar según el proyecto seleccionado y el estado seleccionado
   const filteredTasks = tasks.filter((task) => {
     const matchesProject = selectedProjectId === null || task.projectId === selectedProjectId
     const matchesStatus = statusFilter === 'ALL' || task.status === statusFilter
@@ -83,6 +90,14 @@ export function TaskList({
 
   return (
     <Stack spacing={2}>
+      {/* Alerta si falla el cambio de estado (ej: error 422 si DONE no tiene responsable) */}
+      {patchError && (
+        <Alert severity="error" onClose={clearError}>
+          {patchError}
+        </Alert>
+      )}
+
+      {/* Barra superior de control y filtros */}
       <Stack
         direction={{ xs: 'column', sm: 'row' }}
         justifyContent="space-between"
@@ -95,7 +110,7 @@ export function TaskList({
 
         <Stack direction="row" spacing={1} alignItems="center">
           <Typography variant="caption" color="text.secondary">
-            Estado:
+            Filtrar:
           </Typography>
           <Select
             size="small"
@@ -111,6 +126,7 @@ export function TaskList({
         </Stack>
       </Stack>
 
+      {/* Indicador de filtro por proyecto activo */}
       {selectedProject && (
         <Alert
           severity="info"
@@ -124,26 +140,37 @@ export function TaskList({
         </Alert>
       )}
 
+      {/* Lista de tarjetas de tareas */}
       {filteredTasks.length === 0 ? (
         <Typography color="text.secondary" py={3} textAlign="center">
           No hay tareas que coincidan con los filtros aplicados.
         </Typography>
       ) : (
-        <Stack direction="column" spacing={2} sx={{maxHeight: 560, overflowY: 'auto', pr: 0.5 }}>
+        <Box
+          sx={{
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 2,
+            ...(maxHeight ? { maxHeight, overflowY: 'auto', pr: 0.5 } : {}),
+          }}
+        >
           {filteredTasks.map((task) => {
             const project = projects.find((p) => p.id === task.projectId)
             const projectName = project ? project.name : `Proyecto #${task.projectId}`
+            const isUpdating = updatingTaskId === task.id
 
             return (
               <Card
                 key={task.id}
                 variant="outlined"
                 sx={{
+                  flexShrink: 0, // Evita que flexbox colapse la tarjeta
+                  minHeight: 110,
                   display: 'flex',
                   flexDirection: 'column',
-                  flexShrink: 0,
+                  justifyContent: 'space-between',
                   transition: 'all 0.2s ease-in-out',
-                  borderLeft: '4px solid',
+                  borderLeft: '5px solid',
                   borderLeftColor:
                     task.status === 'DONE'
                       ? 'success.main'
@@ -157,6 +184,7 @@ export function TaskList({
                 }}
               >
                 <CardContent sx={{ pb: 1, pt: 2, px: 2.5 }}>
+                  {/* Encabezado de la tarjeta: Título y Selector de Estado */}
                   <Stack
                     direction={{ xs: 'column', sm: 'row' }}
                     justifyContent="space-between"
@@ -176,16 +204,49 @@ export function TaskList({
                       {task.title}
                     </Typography>
 
-                    <Stack direction="row" spacing={0.75} flexShrink={0}>
-                      {getStatusBadge(task.status)}
+                    {/* Selector interactivo de Estado (PATCH /tasks/{id}/status) y Prioridad */}
+                    <Stack direction="row" spacing={1} alignItems="center" flexShrink={0}>
+                      <Select
+                        size="small"
+                        value={task.status}
+                        disabled={isUpdating}
+                        onChange={(e) => changeStatus(task.id, e.target.value as TaskStatus)}
+                        sx={{
+                          height: 30,
+                          fontSize: '0.75rem',
+                          fontWeight: 600,
+                          borderRadius: 1.5,
+                          bgcolor:
+                            task.status === 'DONE'
+                              ? 'rgba(46, 125, 50, 0.1)'
+                              : task.status === 'IN_PROGRESS'
+                              ? 'rgba(237, 108, 2, 0.1)'
+                              : 'action.hover',
+                          color:
+                            task.status === 'DONE'
+                              ? 'success.main'
+                              : task.status === 'IN_PROGRESS'
+                              ? 'warning.main'
+                              : 'text.primary',
+                          '& .MuiSelect-select': { py: 0.25, px: 1 },
+                        }}
+                      >
+                        <MenuItem value="TODO">Por hacer</MenuItem>
+                        <MenuItem value="IN_PROGRESS">En progreso</MenuItem>
+                        <MenuItem value="DONE">Completada</MenuItem>
+                      </Select>
+
+                      {isUpdating && <CircularProgress size={16} />}
                       {getPriorityBadge(task.priority)}
                     </Stack>
                   </Stack>
 
+                  {/* Proyecto asociado */}
                   <Typography variant="caption" color="text.secondary" display="block" mb={1}>
                     <strong>{projectName}</strong> (ID Proyecto: {task.projectId})
                   </Typography>
 
+                  {/* Descripción de la tarea si existe */}
                   {task.description && (
                     <Typography
                       variant="body2"
@@ -203,6 +264,7 @@ export function TaskList({
                   )}
                 </CardContent>
 
+                {/* Acciones de la tarjeta: fecha límite y botón para navegar al detalle */}
                 <CardActions
                   sx={{
                     pt: 0,
@@ -229,7 +291,7 @@ export function TaskList({
               </Card>
             )
           })}
-        </Stack>
+        </Box>
       )}
     </Stack>
   )

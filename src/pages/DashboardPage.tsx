@@ -132,6 +132,8 @@ export function DashboardPage() {
                 selectedProjectId={selectedProjectId}
                 onClearProjectFilter={() => setSelectedProjectId(null)}
                 onSelectTask={(id) => navigate(`/tasks/${id}`)}
+                onTaskUpdated={() => refetchTasks()}
+                maxHeight={560}
               />
             </Paper>
           </Grid>

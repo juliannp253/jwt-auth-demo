@@ -86,10 +86,6 @@ export function TaskDetailPage() {
               Dashboard
             </Button>
           </Stack>
-
-          <Typography variant="caption" color="text.secondary">
-            Ruta: <code>/tasks/{id}</code> (GET /tasks/{'{id}'})
-          </Typography>
         </Stack>
 
         {loading && (
@@ -112,6 +108,7 @@ export function TaskDetailPage() {
             task={task}
             projectName={projectName}
             projectDescription={project?.description}
+            onStatusUpdated={(updated) => setTask(updated)}
           />
         )}
       </Container>

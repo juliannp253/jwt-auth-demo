@@ -19,3 +19,7 @@ export interface TaskRequest {
   assigneeId?: number | null
   dueDate?: string | null
 }
+
+export interface TaskStatusUpdateRequest {
+  status: TaskStatus
+}

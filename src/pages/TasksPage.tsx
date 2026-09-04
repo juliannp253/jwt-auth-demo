@@ -44,9 +44,6 @@ export function TasksPage() {
               >
                 Dashboard
               </Button>
-              <Typography variant="caption" color="text.secondary">
-                Ruta: <code>/tasks</code> (GET /tasks)
-              </Typography>
             </Stack>
 
             <Typography variant="h4" fontWeight={700}>
@@ -86,6 +83,7 @@ export function TasksPage() {
             selectedProjectId={selectedProjectId}
             onClearProjectFilter={() => setSelectedProjectId(null)}
             onSelectTask={(id) => navigate(`/tasks/${id}`)}
+            onTaskUpdated={() => refetchTasks()}
           />
         </Paper>
       </Container>

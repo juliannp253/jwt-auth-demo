@@ -5,27 +5,33 @@ import type { Task, TaskPriority } from '../types'
 
 interface UseTaskFormOptions {
   initialProjectId?: number | null
+  initialAssigneeId?: number | null
   onSuccess?: (task: Task) => void
 }
 
-export function useTaskForm({ initialProjectId = null, onSuccess }: UseTaskFormOptions = {}) {
+export function useTaskForm({
+  initialProjectId = null,
+  initialAssigneeId = null,
+  onSuccess,
+}: UseTaskFormOptions = {}) {
   const [projectId, setProjectId] = useState<number | ''>(initialProjectId ?? '')
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
   const [priority, setPriority] = useState<TaskPriority>('MED')
   const [dueDate, setDueDate] = useState('')
-  const [assigneeId, setAssigneeId] = useState<string>('')
+  const [assigneeId, setAssigneeId] = useState<number | ''>(initialAssigneeId ?? '')
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  const isValid = Boolean(projectId) && title.trim().length >= 3
+  // Validación: Proyecto, Título (mín. 3 letras) y Responsable son OBLIGATORIOS
+  const isValid = Boolean(projectId) && title.trim().length >= 3 && Boolean(assigneeId)
 
   function reset() {
     setTitle('')
     setDescription('')
     setPriority('MED')
     setDueDate('')
-    setAssigneeId('')
+    setAssigneeId(initialAssigneeId ?? '')
     setError(null)
   }
 
@@ -42,7 +48,7 @@ export function useTaskForm({ initialProjectId = null, onSuccess }: UseTaskFormO
         description: description.trim() || undefined,
         priority,
         dueDate: dueDate || null,
-        assigneeId: assigneeId ? Number(assigneeId) : null,
+        assigneeId: Number(assigneeId),
       })
 
       reset()
