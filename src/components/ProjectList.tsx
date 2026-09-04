@@ -13,6 +13,7 @@ import ListItem from '@mui/material/ListItem'
 import ListItemText from '@mui/material/ListItemText'
 import Stack from '@mui/material/Stack'
 import Typography from '@mui/material/Typography'
+import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
 import { useDeleteProject } from '../hooks/useDeleteProject'
 import type { Project, Task } from '../types'
@@ -36,6 +37,7 @@ export function ProjectList({
   onSelectProject,
   onProjectDeleted,
 }: ProjectListProps) {
+  const navigate = useNavigate()
   const { user } = useAuth()
   const [projectToDelete, setProjectToDelete] = useState<Project | null>(null)
 
@@ -69,6 +71,7 @@ export function ProjectList({
 
   return (
     <Stack spacing={1}>
+      {/* Alerta de error si falla el borrado (ej: error 403 si no es el owner ni ADMIN) */}
       {deleteError && (
         <Alert severity="error" onClose={clearError}>
           {deleteError}
@@ -111,9 +114,20 @@ export function ProjectList({
               <ListItemText
                 primary={
                   <Stack direction="row" spacing={1} alignItems="center">
-                    <Typography variant="body2" fontWeight={isSelected ? 700 : 500}>
+                    {/* Clic discreto en el propio nombre del proyecto para ir al detalle */}
+                    <Typography
+                      variant="body2"
+                      fontWeight={isSelected ? 700 : 600}
+                      sx={{
+                        cursor: 'pointer',
+                        '&:hover': { color: 'primary.main', textDecoration: 'underline' },
+                      }}
+                      onClick={() => navigate(`/projects/${project.id}`)}
+                      title="Haz clic para ver el detalle de este proyecto"
+                    >
                       {project.name}
                     </Typography>
+
                     {isOwner && (
                       <Chip
                         label="Tuyo"
@@ -132,6 +146,9 @@ export function ProjectList({
                         {project.description}
                       </Typography>
                     )}
+                    <Typography variant="caption" color="text.disabled" sx={{ fontSize: '0.68rem' }}>
+                      Creado: {project.createdAt} • Dueño ID #{project.ownerId}
+                    </Typography>
                   </Stack>
                 }
               />
@@ -155,6 +172,7 @@ export function ProjectList({
                   </Button>
                 )}
 
+                {/* Botón de eliminar solo texto sin iconos */}
                 <Button
                   size="small"
                   color="error"
@@ -171,6 +189,7 @@ export function ProjectList({
         })}
       </List>
 
+      {/* Modal de confirmación para eliminar proyecto y sus tareas en cascada */}
       <Dialog
         open={Boolean(projectToDelete)}
         onClose={() => setProjectToDelete(null)}

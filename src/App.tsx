@@ -5,6 +5,7 @@ import { AuthProvider } from './context/AuthContext'
 import { ProtectedRoute } from './ProtectedRoute'
 import { DashboardPage } from './pages/DashboardPage'
 import { LoginPage } from './pages/LoginPage'
+import { ProjectDetailPage } from './pages/ProjectDetailPage'
 import { RegisterPage } from './pages/RegisterPage'
 import { TaskDetailPage } from './pages/TaskDetailPage'
 import { TasksPage } from './pages/TasksPage'
@@ -23,6 +24,7 @@ export default function App() {
             <Route path="/register" element={<RegisterPage />} />
             <Route element={<ProtectedRoute />}>
               <Route path="/dashboard" element={<DashboardPage />} />
+              <Route path="/projects/:id" element={<ProjectDetailPage />} />
               <Route path="/tasks" element={<TasksPage />} />
               <Route path="/tasks/:id" element={<TaskDetailPage />} />
             </Route>
