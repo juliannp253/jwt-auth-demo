@@ -21,7 +21,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [isAuthenticated, setIsAuthenticated] = useState(() => Boolean(authService.getToken()))
   const [user, setUser] = useState<UserResponse | null>(null)
 
-  // Si ya hay un token al recargar la página, consultamos GET /auth/me
   useEffect(() => {
     if (!isAuthenticated) return
 
@@ -33,7 +32,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (!cancelled) setUser(userData)
       })
       .catch(() => {
-        // Si el token es inválido o expiró, cerramos sesión limpiamente
         if (!cancelled) {
           authService.clearToken()
           setIsAuthenticated(false)
@@ -52,7 +50,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       authService.saveToken(token)
       setIsAuthenticated(true)
 
-      // Cargar los datos del usuario recién autenticado (GET /auth/me)
       const userData = await authService.getMe()
       setUser(userData)
 
